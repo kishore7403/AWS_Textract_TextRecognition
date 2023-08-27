@@ -1,0 +1,43 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Resources": {
+      "frontendSecurityGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "EC2 instance",
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": 3000,
+              "ToPort": 3000,
+              "CidrIp": "0.0.0.0/0"
+            }
+          ]
+        }
+      },
+      "frontendInstance": {
+        "Type": "AWS::EC2::Instance",
+        "Properties": {
+          "InstanceType": "t2.micro",
+          "ImageId": "ami-0f34c5ae932e6f0e4",
+          "SecurityGroups": [
+            {
+              "Ref": "frontendSecurityGroup"
+            }
+          ],
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": "cloudfrontend" 
+            }
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Sub": "#!/bin/bash -xe\nyum update -y\nyum install -y docker\nservice docker start\nusermod -a -G docker ec2-user\ndocker run -p 3000:80 kishoreganesh/cloudfrontend:latest"
+            }
+          }
+        }
+      }
+    }
+  }
+  

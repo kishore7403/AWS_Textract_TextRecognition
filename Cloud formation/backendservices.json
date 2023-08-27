@@ -1,0 +1,749 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation for imgToText",
+    "Resources": {
+        "extracttextLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "FunctionName": "extracttext-ta",
+                "Role": "arn:aws:iam::381808967588:role/LabRole",
+                "Timeout": 30,
+                "Runtime": "python3.9",
+                "PackageType": "Zip",
+                "Handler": "index.lambda_handler",
+                "Code": {
+                    "ZipFile": "import boto3\nimport json\nfrom botocore.exceptions import ClientError\n\ndef lambda_handler(event, context):\n    bucket_secret_name = \"imageToText_bucketName-ta\"\n    region_name = \"us-east-1\"\n    session = boto3.session.Session()\n    client = session.client(\n        service_name='secretsmanager',\n        region_name=region_name\n    )\n    try:\n        get_bucket_name_response = client.get_secret_value(\n            SecretId=bucket_secret_name\n        )\n    except ClientError as e:\n        print(e)\n    bucket_name_response = json.loads(get_bucket_name_response['SecretString'])\n    bucket_name = bucket_name_response['imageToText_bucketName-ta']\n    print(bucket_name)\n    key = event['filename']\n    s3_client = boto3.client('s3')\n    textract_client = boto3.client('textract')\n    response = s3_client.get_object(Bucket=bucket_name, Key=key)\n    content = response['Body'].read()\n    textract_response = textract_client.detect_document_text(Document={'Bytes': content})\n    extracted_text = \"\"\n    extracted_text_list = []\n    for item in textract_response['Blocks']:\n        if item['BlockType'] == 'LINE':\n            extracted_text += item['Text'] + \"\\n\"\n            extracted_text_list.append(item[\"Text\"])\n    print(extracted_text)\n    print(extracted_text_list)\n    return {\n        'statusCode': 200,\n        'extracted_text': extracted_text,\n        'extracted_text_list': extracted_text_list,\n        'body': 'Text extraction successful!'\n    }"
+                }
+            }
+        },
+        "uploadimageLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "FunctionName": "uploadimage-ta",
+                "Role": "arn:aws:iam::381808967588:role/LabRole",
+                "Timeout": 30,
+                "Runtime": "python3.9",
+                "PackageType": "Zip",
+                "Handler": "index.lambda_handler",
+                "Code": {
+                    "ZipFile": "import json\nimport base64\nimport boto3\nfrom datetime import datetime\nfrom botocore.exceptions import ClientError\n\ndef lambda_handler(event, context):\n    s3 = boto3.client(\"s3\")\n    print(event)\n    get_file_content = event[\"content\"]\n    username = event[\"username\"]\n    key = event['filename']\n    decode_content = base64.b64decode(get_file_content)\n    bucket_secret_name = \"imageToText_bucketName-ta\"\n    region_name = \"us-east-1\"\n    session = boto3.session.Session()\n    client = session.client(\n        service_name='secretsmanager',\n        region_name=region_name\n    )\n    try:\n        get_bucket_name_response = client.get_secret_value(\n            SecretId=bucket_secret_name\n        )\n    except ClientError as e:\n        print(e)\n    bucket_name_response = json.loads(get_bucket_name_response['SecretString'])\n    bucket_name = bucket_name_response['imageToText_bucketName-ta']\n    print(bucket_name)\n    s3_upload = s3.put_object(Bucket=bucket_name, Key=key, Body=decode_content)\n    return {\n        'statusCode': 200,\n        'headers': {\n            'Access-Control-Allow-Headers': 'Content-Type',\n            'Access-Control-Allow-Origin': '*',\n            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',\n            'Access-Control-Max-Age': '3600',\n        },\n        'body': json.dumps('File stored in S3.')\n    }"
+                }
+            }
+        },
+        "signinLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "FunctionName": "signin-ta",
+                "Role": "arn:aws:iam::381808967588:role/LabRole",
+                "Timeout": 30,
+                "Runtime": "python3.9",
+                "PackageType": "Zip",
+                "Handler": "index.lambda_handler",
+                "Code": {
+                    "ZipFile": "import boto3\nimport json\nimport hashlib\n\ndef lambda_handler(event, context):\n    dynamodb = boto3.resource('dynamodb')\n    table_secret_name = 'dynamoDB_tableName-ta'\n    region_name = \"us-east-1\"\n    session = boto3.session.Session()\n    client = session.client(\n        service_name='secretsmanager',\n        region_name=region_name\n    )\n    try:\n        get_table_name_response = client.get_secret_value(\n            SecretId=table_secret_name\n        )\n    except ClientError as e:\n        print(e)\n    table_name_response = json.loads(get_table_name_response['SecretString'])\n    table_name = table_name_response['dynamoDB_tableName-ta']\n    print(table_name)\n    table = dynamodb.Table(table_name)\n    try:\n        # data = json.loads(event['body'])\n        # username = data['username']\n        # password = data['password']\n        print(event)\n        username = event['username']\n        password = event['password']\n        hashed_password = hashlib.md5(password.encode()).hexdigest()\n        item = {\n            'username': username,\n            'password': hashed_password\n        }\n        response = table.put_item(Item=item)\n        return {\n            'statusCode': 200,\n            'headers': {\n                'Access-Control-Allow-Headers': 'Content-Type',\n                'Access-Control-Allow-Origin': '*',\n                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',\n                'Access-Control-Max-Age': '3600',\n            },\n            'body': json.dumps({'message': 'Data inserted successfully'}),\n        }\n    except Exception as e:\n        print('Error inserting data:', e)\n        return {\n            'statusCode': 500,\n            'headers': {\n                'Access-Control-Allow-Headers': 'Content-Type',\n                'Access-Control-Allow-Origin': '*',\n                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',\n                'Access-Control-Max-Age': '3600',\n            },\n            'body': json.dumps({'message': 'Error inserting data into DynamoDB'}),\n        }"
+                }
+            }
+        },
+        "loginLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "FunctionName": "login-ta",
+                "Role": "arn:aws:iam::381808967588:role/LabRole",
+                "Timeout": 30,
+                "Runtime": "python3.9",
+                "PackageType": "Zip",
+                "Handler": "index.lambda_handler",
+                "Code": {
+                    "ZipFile": "import boto3\nimport json\nimport hashlib\n\ndef lambda_handler(event, context):\n    dynamodb = boto3.resource('dynamodb')\n    table_secret_name = 'dynamoDB_tableName-ta'\n    region_name = \"us-east-1\"\n    session = boto3.session.Session()\n    client = session.client(\n        service_name='secretsmanager',\n        region_name=region_name\n    )\n    try:\n        get_table_name_response = client.get_secret_value(\n            SecretId=table_secret_name\n        )\n    except ClientError as e:\n        print(e)\n    table_name_response = json.loads(get_table_name_response['SecretString'])\n    table_name = table_name_response['dynamoDB_tableName-ta']\n    print(table_name)\n    table = dynamodb.Table(table_name)\n    try:\n        # data = json.loads(event['body'])\n        # username = data['username']\n        # password = data['password']\n        print(event)\n        username = event['username']\n        password = event['password']\n        print(username, password)\n        hashed_password = hashlib.md5(password.encode()).hexdigest()\n        # Perform the GetItem operation to check if the user exists in DynamoDB\n        response = table.get_item(Key={'username': username, 'password': hashed_password})\n        print(response)\n        print(type(response))\n        # print(response['Item'])\n        # print(type(response['Item']))\n        if 'Item' in response:\n            print(\"True\")\n            return {\n                'statusCode': 200,\n                'headers': {\n                    'Access-Control-Allow-Headers': 'Content-Type',\n                    'Access-Control-Allow-Origin': '*',\n                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',\n                    'Access-Control-Max-Age': '3600',\n                },\n                'body': json.dumps({'message': 'User credentials are valid'}),\n            }\n        else:\n            print(\"False\")\n            return {\n                'statusCode': 401,\n                'headers': {\n                    'Access-Control-Allow-Headers': 'Content-Type',\n                    'Access-Control-Allow-Origin': '*',\n                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',\n                    'Access-Control-Max-Age': '3600',\n                },\n                'body': json.dumps({'message': 'Invalid username or password'}),\n            }\n    except Exception as e:\n        print('Error checking user:', e)\n        return {\n            'statusCode': 500,\n            'headers': {\n                'Access-Control-Allow-Headers': 'Content-Type',\n                'Access-Control-Allow-Origin': '*',\n                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',\n                'Access-Control-Max-Age': '3600',\n            },\n            'body': json.dumps({'message': 'Error checking user in DynamoDB'}),\n        }"
+                }
+            }
+        },
+        "DynamoDBTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+                "TableName": "usertable-ta",
+                "AttributeDefinitions": [
+                    {
+                        "AttributeName": "username",
+                        "AttributeType": "S"
+                    },
+                    {
+                        "AttributeName": "password",
+                        "AttributeType": "S"
+                    }
+                ],
+                "KeySchema": [
+                    {
+                        "AttributeName": "username",
+                        "KeyType": "HASH"
+                    },
+                    {
+                        "AttributeName": "password",
+                        "KeyType": "RANGE"
+                    }
+                ],
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": 5,
+                    "WriteCapacityUnits": 5
+                }
+            }
+        },
+        "DynamoDBTableNameSecret": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Name": "dynamoDB_tableName-ta",
+                "Description": "dynamoDB_tableName-ta",
+                "SecretString": "{ \"dynamoDB_tableName-ta\": \"usertable-ta\" }"
+            }
+        },
+		"ImageToTextBucketNameSecret": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Name": "imageToText_bucketName-ta",
+                "Description": "imageToText_bucketName-ta",
+                "SecretString": "{ \"imageToText_bucketName-ta\": \"texttractbucket-ta\" }"
+            }
+        },
+        "TexttractBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "texttractbucket-ta",
+                "PublicAccessBlockConfiguration": {
+                    "BlockPublicAcls": false,
+                    "BlockPublicPolicy": false,
+                    "IgnorePublicAcls": false,
+                    "RestrictPublicBuckets": false
+                }
+            }
+        },
+        "TexttractBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+                "Bucket": {
+                    "Ref": "TexttractBucket"
+                },
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "PublicReadGetObject",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": "s3:GetObject",
+                            "Resource": {
+                                "Fn::Join": [
+                                    "",
+                                    [
+                                        "arn:aws:s3:::",
+                                        {
+                                            "Ref": "TexttractBucket"
+                                        },
+                                        "/*"
+                                    ]
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+		"imageToTextApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Properties": {
+                "Name": "imageToTextApi",
+                "EndpointConfiguration": {
+                    "Types": [
+                        "REGIONAL"
+                    ]
+                }
+            }
+        },
+        "imageToTextApisignin":{
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+          },
+          "ParentId": {
+              "Fn::GetAtt": [
+                  "imageToTextApi",
+                  "RootResourceId"
+              ]
+          },
+          "PathPart": "signin"
+      },
+      "DependsOn": [
+          "imageToTextApi"
+      ]
+        },
+        "imageToTextApilogin":{
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+          },
+          "ParentId": {
+              "Fn::GetAtt": [
+                  "imageToTextApi",
+                  "RootResourceId"
+              ]
+          },
+          "PathPart": "login"
+      },
+      "DependsOn": [
+          "imageToTextApi"
+      ]
+        },
+        "imageToTextApiuploadimage":{
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+          },
+          "ParentId": {
+              "Fn::GetAtt": [
+                  "imageToTextApi",
+                  "RootResourceId"
+              ]
+          },
+          "PathPart": "uploadimage"
+      },
+      "DependsOn": [
+          "imageToTextApi"
+      ]
+        },
+        "imageToTextApiextracttext":{
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+          },
+          "ParentId": {
+              "Fn::GetAtt": [
+                  "imageToTextApi",
+                  "RootResourceId"
+              ]
+          },
+          "PathPart": "extracttext"
+      },
+      "DependsOn": [
+          "imageToTextApi"
+      ]
+        },
+        "signinCors": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApisignin"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "Integration": {
+                    "Type": "MOCK",
+                    "IntegrationResponses": [
+                        {
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            },
+                            "ResponseTemplates": {
+                                "application/json": ""
+                            },
+                            "StatusCode": "200"
+                        }
+                    ],
+                    "PassthroughBehavior": "NEVER",
+                    "RequestTemplates": {
+                        "application/json": "{\"statusCode\": 200}"
+                    }
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        },
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            }
+        },
+        "loginCors": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApilogin"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "Integration": {
+                    "Type": "MOCK",
+                    "IntegrationResponses": [
+                        {
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            },
+                            "ResponseTemplates": {
+                                "application/json": ""
+                            },
+                            "StatusCode": "200"
+                        }
+                    ],
+                    "PassthroughBehavior": "NEVER",
+                    "RequestTemplates": {
+                        "application/json": "{\"statusCode\": 200}"
+                    }
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        },
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            }
+        },
+        "uploadimageCors": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApiuploadimage"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "Integration": {
+                    "Type": "MOCK",
+                    "IntegrationResponses": [
+                        {
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            },
+                            "ResponseTemplates": {
+                                "application/json": ""
+                            },
+                            "StatusCode": "200"
+                        }
+                    ],
+                    "PassthroughBehavior": "NEVER",
+                    "RequestTemplates": {
+                        "application/json": "{\"statusCode\": 200}"
+                    }
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        },
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            }
+        },
+        "extracttextCors": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApiextracttext"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "Integration": {
+                    "Type": "MOCK",
+                    "IntegrationResponses": [
+                        {
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            },
+                            "ResponseTemplates": {
+                                "application/json": ""
+                            },
+                            "StatusCode": "200"
+                        }
+                    ],
+                    "PassthroughBehavior": "NEVER",
+                    "RequestTemplates": {
+                        "application/json": "{\"statusCode\": 200}"
+                    }
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseModels": {
+                            "application/json": "Empty"
+                        },
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            }
+        },
+        "imageToTextApisigninEndpoint": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApisignin"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "POST",
+                "Integration": {
+                    "Type": "AWS",
+                    "IntegrationHttpMethod": "POST",
+                    "Uri": {
+                        "Fn::Sub": [
+                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SIGNIN_LAMBDA}/invocations",
+                            {
+                                "SIGNIN_LAMBDA": {
+                                    "Fn::GetAtt": [
+                                        "signinLambda",
+                                        "Arn"
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "IntegrationResponses": [
+                        {
+                            "StatusCode": 200,
+                            "ResponseTemplates": {
+                                "application/json": "$input.json('$')"
+                            },
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            }
+                        }
+                    ],
+                    "RequestTemplates": {
+                        "application/json": "$input.json('$')"
+                    }
+                },
+                "RequestParameters": {
+                    "method.request.querystring.name": false
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "imageToTextApisignin",
+                "signinLambda"
+            ]
+        },
+		"imageToTextApiloginEndpoint": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApilogin"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "POST",
+                "Integration": {
+                    "Type": "AWS",
+                    "IntegrationHttpMethod": "POST",
+                    "Uri": {
+                        "Fn::Sub": [
+                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LOGIN_LAMBDA}/invocations",
+                            {
+                                "LOGIN_LAMBDA": {
+                                    "Fn::GetAtt": [
+                                        "loginLambda",
+                                        "Arn"
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "IntegrationResponses": [
+                        {
+                            "StatusCode": 200,
+                            "ResponseTemplates": {
+                                "application/json": "$input.json('$')"
+                            },
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            }
+                        }
+                    ],
+                    "RequestTemplates": {
+                        "application/json": "$input.json('$')"
+                    }
+                },
+                "RequestParameters": {
+                    "method.request.querystring.name": false
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "imageToTextApilogin",
+                "loginLambda"
+            ]
+        },
+		"imageToTextApiuploadimageEndpoint": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApiuploadimage"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "POST",
+                "Integration": {
+                    "Type": "AWS",
+                    "IntegrationHttpMethod": "POST",
+                    "Uri": {
+                        "Fn::Sub": [
+                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UPLOADIMAGE_LAMBDA}/invocations",
+                            {
+                                "UPLOADIMAGE_LAMBDA": {
+                                    "Fn::GetAtt": [
+                                        "uploadimageLambda",
+                                        "Arn"
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "IntegrationResponses": [
+                        {
+                            "StatusCode": 200,
+                            "ResponseTemplates": {
+                                "application/json": "$input.json('$')"
+                            },
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            }
+                        }
+                    ],
+                    "RequestTemplates": {
+                        "application/json": "$input.json('$')"
+                    }
+                },
+                "RequestParameters": {
+                    "method.request.querystring.name": false
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "imageToTextApiuploadimage",
+                "uploadimageLambda"
+            ]
+        },
+		"imageToTextApiextracttextEndpoint": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+                "ResourceId": {
+                    "Ref": "imageToTextApiextracttext"
+                },
+                "RestApiId": {
+                    "Ref": "imageToTextApi"
+                },
+                "AuthorizationType": "NONE",
+                "HttpMethod": "POST",
+                "Integration": {
+                    "Type": "AWS",
+                    "IntegrationHttpMethod": "POST",
+                    "Uri": {
+                        "Fn::Sub": [
+                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${EXTRACTTEXT_LAMBDA}/invocations",
+                            {
+                                "EXTRACTTEXT_LAMBDA": {
+                                    "Fn::GetAtt": [
+                                        "extracttextLambda",
+                                        "Arn"
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "IntegrationResponses": [
+                        {
+                            "StatusCode": 200,
+                            "ResponseTemplates": {
+                                "application/json": "$input.json('$')"
+                            },
+                            "ResponseParameters": {
+                                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+                                "method.response.header.Access-Control-Allow-Origin": "'*'"
+                            }
+                        }
+                    ],
+                    "RequestTemplates": {
+                        "application/json": "$input.json('$')"
+                    }
+                },
+                "RequestParameters": {
+                    "method.request.querystring.name": false
+                },
+                "MethodResponses": [
+                    {
+                        "ResponseParameters": {
+                            "method.response.header.Access-Control-Allow-Headers": true,
+                            "method.response.header.Access-Control-Allow-Methods": true,
+                            "method.response.header.Access-Control-Allow-Origin": true
+                        },
+                        "StatusCode": "200"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "imageToTextApiextracttext",
+                "extracttextLambda"
+            ]
+        },
+		"imageToTextApiDeployment": {
+			"Type": "AWS::ApiGateway::Deployment",
+			"Properties": {
+				"RestApiId": {
+					"Ref": "imageToTextApi"
+				},
+				"StageName": "production"
+			},
+			"DependsOn": [
+				"imageToTextApisigninEndpoint",
+				"imageToTextApiloginEndpoint",
+				"imageToTextApiuploadimageEndpoint",
+				"imageToTextApiextracttextEndpoint"
+			]
+		},
+		"imageToTextApisigninPermission": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"FunctionName": {
+					"Ref": "signinLambda"
+				},
+				"Action": "lambda:InvokeFunction",
+				"Principal": "apigateway.amazonaws.com",
+				"SourceArn": {
+					"Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${imageToTextApi}/*/*/*"
+				}
+			},
+			"DependsOn": [
+				"imageToTextApiDeployment"
+			]
+		},
+		"imageToTextApiloginPermission": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"FunctionName": {
+					"Ref": "loginLambda"
+				},
+				"Action": "lambda:InvokeFunction",
+				"Principal": "apigateway.amazonaws.com",
+				"SourceArn": {
+					"Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${imageToTextApi}/*/*/*"
+				}
+			},
+			"DependsOn": [
+				"imageToTextApiDeployment"
+			]
+		},
+		"imageToTextApiuploadimagePermission": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"FunctionName": {
+					"Ref": "uploadimageLambda"
+				},
+				"Action": "lambda:InvokeFunction",
+				"Principal": "apigateway.amazonaws.com",
+				"SourceArn": {
+					"Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${imageToTextApi}/*/*/*"
+				}
+			},
+			"DependsOn": [
+				"imageToTextApiDeployment"
+			]
+		},
+		"imageToTextApiextracttextPermission": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"FunctionName": {
+					"Ref": "extracttextLambda"
+				},
+				"Action": "lambda:InvokeFunction",
+				"Principal": "apigateway.amazonaws.com",
+				"SourceArn": {
+					"Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${imageToTextApi}/*/*/*"
+				}
+			},
+			"DependsOn": [
+				"imageToTextApiDeployment"
+			]
+		}
+    }
+}

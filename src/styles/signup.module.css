@@ -1,0 +1,30 @@
+
+.pageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .signupContainer {
+    max-width: 400px; 
+  }
+  
+  .signupPaper {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-shadow: 0 0 8px 2px #B2EBF2;
+  }
+  
+  .form {
+    margin-top: 2rem;
+    width: 100%;
+  }
+  
+  .submitButton {
+    margin-top: 2rem;
+  }
+  
