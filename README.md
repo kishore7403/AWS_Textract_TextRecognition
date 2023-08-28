@@ -1,70 +1,105 @@
-# Getting Started with Create React App
+# Text Recognition Application using AWS Services
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![Application Demo](demo_screenshot.png)
 
-## Available Scripts
+## Project Links
 
-In the project directory, you can run:
+- [Hosted Application](https://your-hosted-link.com)
+- [Explanation Video - Part 1](https://your-video-link-part-1.com)
+- [Explanation Video - Part 2](https://your-video-link-part-2.com)
 
-### `npm start`
+## Table of Contents
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- [Introduction](#introduction)
+- [Project Overview](#project-overview)
+- [Project Goals and Objectives](#project-goals-and-objectives)
+- [Target Users](#target-users)
+- [Performance Targets](#performance-targets)
+- [Services Used](#services-used)
+- [How Cloud Mechanisms Fit Together](#how-cloud-mechanisms-fit-together)
+- [Data Storage](#data-storage)
+- [Programming Languages](#programming-languages)
+- [Architecture Diagram](#architecture-diagram)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Introduction
 
-### `npm test`
+The Text Recognition Application is a cloud-based solution that leverages AWS services to offer users the ability to extract text from images using Amazon Textract. This user-friendly application facilitates the extraction of text from various sources, including handwritten notes, scanned documents, printed text, and code snippets.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Project Goals and Objectives
 
-### `npm run build`
+The primary goal of this project is to create an efficient and secure application for text recognition using Amazon Textract. Key objectives include:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Enabling users to log in securely.
+- Accepting image uploads in multiple formats.
+- Accurate and efficient text recognition.
+- Support for various use cases and input types.
+- High availability, scalability, and cost-effectiveness.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Target Users
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+This application is designed for individuals and professionals who require accurate text extraction from diverse sources. Target users include students, researchers, programmers, administrators, and anyone dealing with text data from various inputs.
 
-### `npm run eject`
+## Performance Targets
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- **Response Time:** The application aims for fast processing with minimal response time per image.
+- **Accuracy:** The text recognition engine strives for high accuracy to minimize extraction errors.
+- **Versatility:** The application is designed to handle a wide range of text recognition tasks.
+- **Scalability:** The system is built to efficiently scale to accommodate user demand and task complexities.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Services Used
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+The following AWS services are utilized in this project:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **Compute:** Amazon EC2, AWS Lambda
+- **Storage:** Amazon S3, Amazon DynamoDB
+- **Security:** AWS Secrets Manager
+- **Text Recognition:** Amazon Textract
+- **Network:** Amazon API Gateway
 
-## Learn More
+## How Cloud Mechanisms Fit Together
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Amazon API Gateway serves as the entry point, routing user requests from the frontend hosted on Amazon EC2 to relevant AWS Lambda functions. These functions handle user login, image uploads, and text extraction. Amazon DynamoDB securely stores user data, while Amazon S3 stores uploaded images. The Lambda function responsible for text extraction employs Amazon Textract to process images and extract text. AWS Secrets Manager ensures secure access to DynamoDB and S3. The combination of these cloud mechanisms creates a robust and scalable system, offering users a seamless experience.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Data Storage
 
-### Code Splitting
+- User information and login credentials are stored in Amazon DynamoDB, a secure NoSQL database.
+- Uploaded images are stored in Amazon S3, providing scalable and durable object storage.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Programming Languages
 
-### Analyzing the Bundle Size
+- Python: Used for writing AWS Lambda functions.
+- JavaScript: Used for frontend application development.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Architecture Diagram
 
-### Making a Progressive Web App
+![Architecture Diagram](architecture_diagram.png)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Getting Started
 
-### Advanced Configuration
+To set up and run the application locally, follow these steps:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+1. Clone this repository.
+2. Install the required dependencies.
+3. Configure AWS credentials.
+4. Run the frontend application.
+5. Deploy AWS Lambda functions.
+6. Configure API Gateway.
 
-### Deployment
+## Usage
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. Launch the application.
+2. Log in using your credentials.
+3. Upload an image for text extraction.
+4. View extracted text results.
 
-### `npm run build` fails to minify
+## Contributing
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Contributions to this project are welcome! If you find issues or have suggestions, please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
