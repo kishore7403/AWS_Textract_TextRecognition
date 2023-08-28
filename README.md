@@ -6,12 +6,17 @@ The Text Recognition Application is a cloud-based solution that leverages AWS se
 
 ![Project Architecture](https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/79468ca2-8152-46a7-b334-385400ccc01c)
 
-## Project Links
+## Project 
 
 - [Hosted Application](http://52.73.6.62:3000/) (If not working refer to demo videos below).
-- [Full Architecture and demo - Video](https://drive.google.com/file/d/1jRLwEPAjXeJZEvwOfZd4ucSpYH416tsV/view?usp=drive_link)
-- [Short Demo - Video](https://drive.google.com/file/d/1YlWHvD0QTI2w9mDUUCsxuR7MC2vHGrIR/view?usp=sharing)
 
+Architecture and flow
+
+https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/b93f6dc8-0798-4c25-b490-1b40a2d5fb6c
+
+Short Demo
+
+https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/6a7e88b0-1b6e-4d1a-8177-3d154e208476
 
 ## Table of Contents
 
@@ -24,6 +29,7 @@ The Text Recognition Application is a cloud-based solution that leverages AWS se
 - [How Cloud Mechanisms Fit Together](#how-cloud-mechanisms-fit-together)
 - [Data Storage](#data-storage)
 - [Programming Languages](#programming-languages)
+
 
 ## Project Goals and Objectives
 
