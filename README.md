@@ -8,7 +8,7 @@ The Text Recognition Application is a cloud-based solution that leverages AWS se
 
 ## Project Links
 
-- [Hosted Application](http://52.73.6.62:3000/) If not working refer demo vidoes below.
+<a href="http://52.73.6.62:3000/" target="_blank" rel="noopener noreferrer">Hosted Application</a> (If not working refer demo vidoes below.)
 - [Explanation Video - Part 1](https://your-video-link-part-1.com)
 - [Explanation Video - Part 2](https://your-video-link-part-2.com)
 
