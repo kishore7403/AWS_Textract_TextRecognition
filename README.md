@@ -1,7 +1,10 @@
 # Text Recognition Application using AWS Services
 
-![Project Architecture](https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/79468ca2-8152-46a7-b334-385400ccc01c)
+## Introduction
 
+The Text Recognition Application is a cloud-based solution that leverages AWS services to offer users the ability to extract text from images using Amazon Textract. This user-friendly application facilitates the extraction of text from various sources, including handwritten notes, scanned documents, printed text, and code snippets.
+
+![Project Architecture](https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/79468ca2-8152-46a7-b334-385400ccc01c)
 
 ## Project Links
 
@@ -20,15 +23,6 @@
 - [How Cloud Mechanisms Fit Together](#how-cloud-mechanisms-fit-together)
 - [Data Storage](#data-storage)
 - [Programming Languages](#programming-languages)
-- [Architecture Diagram](#architecture-diagram)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Introduction
-
-The Text Recognition Application is a cloud-based solution that leverages AWS services to offer users the ability to extract text from images using Amazon Textract. This user-friendly application facilitates the extraction of text from various sources, including handwritten notes, scanned documents, printed text, and code snippets.
 
 ## Project Goals and Objectives
 
@@ -74,33 +68,3 @@ Amazon API Gateway serves as the entry point, routing user requests from the fro
 
 - Python: Used for writing AWS Lambda functions.
 - JavaScript: Used for frontend application development.
-
-## Architecture Diagram
-
-![Architecture Diagram](architecture_diagram.png)
-
-## Getting Started
-
-To set up and run the application locally, follow these steps:
-
-1. Clone this repository.
-2. Install the required dependencies.
-3. Configure AWS credentials.
-4. Run the frontend application.
-5. Deploy AWS Lambda functions.
-6. Configure API Gateway.
-
-## Usage
-
-1. Launch the application.
-2. Log in using your credentials.
-3. Upload an image for text extraction.
-4. View extracted text results.
-
-## Contributing
-
-Contributions to this project are welcome! If you find issues or have suggestions, please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
