@@ -1,5 +1,3 @@
-
-https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/975719e4-c017-458e-aaed-4d634ad37b41
 # Text Recognition Application using AWS Services
 
 ## Introduction
