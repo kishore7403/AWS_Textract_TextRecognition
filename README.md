@@ -1,3 +1,5 @@
+
+https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/975719e4-c017-458e-aaed-4d634ad37b41
 # Text Recognition Application using AWS Services
 
 ## Introduction
@@ -9,8 +11,9 @@ The Text Recognition Application is a cloud-based solution that leverages AWS se
 ## Project Links
 
 - [Hosted Application](http://52.73.6.62:3000/) (If not working refer to demo videos below).
-- [Explanation Video - Part 1](https://your-video-link-part-1.com)
-- [Explanation Video - Part 2](https://your-video-link-part-2.com)
+- [Full Architecture and demo - Video](https://drive.google.com/file/d/1jRLwEPAjXeJZEvwOfZd4ucSpYH416tsV/view?usp=drive_link)
+- [Short Demo - Video](https://drive.google.com/file/d/1YlWHvD0QTI2w9mDUUCsxuR7MC2vHGrIR/view?usp=sharing)
+
 
 ## Table of Contents
 
