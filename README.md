@@ -1,4 +1,4 @@
-# Text Recognition Application using AWS Services
+# Text Recognition using AWS Textract
 
 ## Introduction
 
