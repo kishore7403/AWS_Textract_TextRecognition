@@ -1,6 +1,7 @@
 # Text Recognition Application using AWS Services
 
-![Application Demo](demo_screenshot.png)
+![Project Architecture](https://github.com/kishore7403/AWS_Textract_TextRecognition/assets/48860055/79468ca2-8152-46a7-b334-385400ccc01c)
+
 
 ## Project Links
 
